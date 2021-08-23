@@ -40,21 +40,23 @@ struct data_type runBench(int const degree, int const dimension, int const grid_
     DeviceArrayBatch_withRepetition<Number> output_batched(size_input, batch_count, nb_distinct_outputs);
 
     int iter = 1;
+    int iter_next = 2;
     // runs kronmult several times and displays the average runtime
     //std::cout << "Starting Kronmult" << std::endl;
     double time_ms_total = 0.;
     double time_ms_mean = 0.;
     cudaError errorCode;
     do {
-    auto start                = std::chrono::high_resolution_clock::now();
-    for(int k =0; k<iter;k++)
-        errorCode = kronmult_batched(
-        matrix_count, matrix_size, matrix_list_batched.rawPointer, matrix_stride, input_batched.rawPointer,
-        output_batched.rawPointer, workspace_batched.rawPointer, batch_count);
-    auto stop         = std::chrono::high_resolution_clock::now();
-    time_ms_total = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
-    time_ms_mean = time_ms_total / iter;
-    iter *= 2;
+        iter = iter_next ;
+        auto start                = std::chrono::high_resolution_clock::now();
+        for(int k =0; k<iter;k++)
+            errorCode = kronmult_batched(
+            matrix_count, matrix_size, matrix_list_batched.rawPointer, matrix_stride, input_batched.rawPointer,
+            output_batched.rawPointer, workspace_batched.rawPointer, batch_count);
+        auto stop         = std::chrono::high_resolution_clock::now();
+        time_ms_total = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+        time_ms_mean = time_ms_total / iter;
+        iter_next *= 2;
     } while (time_ms_total < 50.);
     //std::cout << "Runtime: " << milliseconds << "ms" << std::endl;
     checkCudaErrorCode(errorCode, "kronmult_batched");
