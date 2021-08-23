@@ -7,11 +7,17 @@
 // change this to run the bench in another precision
 using Number = double;
 
+struct data_type{
+    double time_ms_mean;
+    double time_ms_total;
+    int iter;
+};
+
 /*
  * runs a benchmark with the given parameters
  * `nb_distinct_outputs` modelizes the fact that most outputs are identical
  */
-double runBench(int const degree, int const dimension, int const grid_level, std::string const benchName,
+struct data_type runBench(int const degree, int const dimension, int const grid_level, std::string const benchName,
               int const nb_distinct_outputs = 5)
 {
     // Kronmult parameters
@@ -36,7 +42,8 @@ double runBench(int const degree, int const dimension, int const grid_level, std
     int iter = 1;
     // runs kronmult several times and displays the average runtime
     //std::cout << "Starting Kronmult" << std::endl;
-    double ms_time = 0.;
+    double time_ms_total = 0.;
+    double time_ms_mean = 0.;
     cudaError errorCode;
     do {
     auto start                = std::chrono::high_resolution_clock::now();
@@ -45,13 +52,17 @@ double runBench(int const degree, int const dimension, int const grid_level, std
         matrix_count, matrix_size, matrix_list_batched.rawPointer, matrix_stride, input_batched.rawPointer,
         output_batched.rawPointer, workspace_batched.rawPointer, batch_count);
     auto stop         = std::chrono::high_resolution_clock::now();
-    ms_time = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
-    ms_time /= iter;
+    time_ms_total = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+    time_ms_mean = time_ms_total / iter;
     iter *= 2;
-    } while (ms_time*iter< 50.);
+    } while (time_ms_total < 50.);
     //std::cout << "Runtime: " << milliseconds << "ms" << std::endl;
     checkCudaErrorCode(errorCode, "kronmult_batched");
-    return ms_time;
+    struct data_type data;
+    data.time_ms_mean = time_ms_mean;
+    data.time_ms_total = time_ms_total;
+    data.iter = iter;
+    return data;
 }
 
 /*
@@ -71,7 +82,7 @@ int main()
     std::cout << "GPU device:" << deviceId << " threadsAvailable:" << threadsPerBlock
               << " architecture:" << deviceProp.major << '.' << deviceProp.minor << std::endl;
 
-    std::cerr << "degree;dimension;level;batchsize;time_ms" << std::endl;
+    std::cerr << "name(deg_dim_batchsize);degree;dimension;batchsize;level;time_ms_mean;time_ms_total;iter" << std::endl;
     // running the benchmarks
     std::vector<std::string> names;
     std::vector<long> times;
@@ -86,10 +97,12 @@ int main()
                 int const batch_count = compute_batch_size(degree, dimension, level, nb_distinct_outputs);
                 //std::string name = "degree:" + std::to_string(degree) + " dimension:" + std::to_string(dimension)
                 //                 + " level:" + std::to_string(level) + " batch-size:" + std::to_string(batch_count);
-                std::string name = std::to_string(degree) + ";" + std::to_string(dimension)
-                                 + ";" + std::to_string(level) + ";" + std::to_string(batch_count);
-                double time_ms = runBench(degree, dimension, level, name, nb_distinct_outputs);
-                std::cerr << name << ";"<<time_ms << std::endl;
+                std::string name = std::to_string(degree) + "_" + std::to_string(dimension)
+                                 + "_" + std::to_string(batch_count);
+                name += ";" + std::to_string(degree) + ";" + std::to_string(dimension)
+                     + ";" + std::to_string(batch_count) + ";" + std::to_string(level);
+                struct data_type data = runBench(degree, dimension, level, name, nb_distinct_outputs);
+                std::cerr << name << ";"<<data.time_ms_mean << ";" << data.time_ms_total << ";" << data.iter << std::endl;
                 // strore result
             }
         }
