@@ -1,4 +1,5 @@
 #pragma once
+#include <kronmult.hpp>
 
 /*
  * returns the batch size to be used with the given parameters
