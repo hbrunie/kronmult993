@@ -15,6 +15,7 @@ else ()
 endif ()
 
 # define KRONMULT_USE_BLAS if BLAS is found
+set(BLA_VENDOR Intel10_64lp)
 find_package(BLAS)
 if (BLAS_FOUND)
     add_compile_definitions(KRONMULT_USE_BLAS)
