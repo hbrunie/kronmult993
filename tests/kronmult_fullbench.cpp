@@ -2,7 +2,7 @@
 #include "utils/batch_size.h"
 #include <chrono>
 #include <iostream>
-#include <kronmult.hpp>
+#include <openmp/kronmult.hpp>
 #include <omp.h>
 
 // change this to run the bench in another precision
