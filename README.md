@@ -60,3 +60,8 @@ mkdir build && cd build
 cmake ../ -DUSE_GPU=1
 make
 ```
+
+## Branch specificity: batched_gemm_mkl
+To compile and run with mkl, the line 
+`set(BLA_VENDOR Intel10_64lp)` has been added to CMakeLists.txt in tests.
+This is specific to Pinocchio the INRIA Corse INTEL avx512 machine.
